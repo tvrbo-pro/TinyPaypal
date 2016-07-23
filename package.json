@@ -1,6 +1,6 @@
 {
   "name": "tiny-paypal",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The missing PayPal tool for Node",
   "main": "index.js",
   "scripts": {
