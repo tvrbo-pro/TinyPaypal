@@ -47,7 +47,7 @@ exports.getAccessToken = function(){
   });
 };
 
-exports.createPayment = function(amount, currency, description){
+exports.createPayment = function(amount, currency, description, success, cancel){
   if(!parameters.initialized) return Promise.reject(new Error("Tiny PayPal must be initialized before it can be used"));
   else if(!amount) Promise.reject(new Error("Please, enter an amount of money to charge"));
   else if(!description) Promise.reject(new Error("Please, enter a description for the transaction as it should appear on PayPal"));
@@ -80,8 +80,8 @@ exports.createPayment = function(amount, currency, description){
       },
       intent:"sale",
       redirect_urls: {
-        cancel_url: parameters.CANCELED_CALLBACK_URL,
-        return_url: parameters.SUCCESS_CALLBACK_URL
+        return_url: success || parameters.SUCCESS_CALLBACK_URL,
+        cancel_url: cancel || parameters.CANCELED_CALLBACK_URL
       }
     };
 

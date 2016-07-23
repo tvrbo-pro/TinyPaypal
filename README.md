@@ -36,6 +36,10 @@ This is a dead-simple tool to create payments using the modern and elegant versi
 
 Redirect your client to the given URL. When the client validates the payment, PayPal will redirect the browser to the `SUCCESS_CALLBACK_URL` with three query parameters:`paymentId`, `token` and `PayerID`.
 
+You can override the default success/cancel URL's by appending two additional parameters to the call:
+
+	tp.createPayment(amount, currency, description, successURL, cancelURL)
+
 ### Get these parameters and execute the payment
 
 	executePayment('the-payment-id', 'the-token', 'the-payer-id')
