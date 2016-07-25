@@ -98,15 +98,25 @@ exports.createPayment = function(amount, currency, description, success, cancel)
   .then(function(payment){
     if(!payment.links) throw new Error("The transaction could not be created");
 
+    var result = {
+      id: payment.id
+      // get
+      // redirect
+      // execute
+    };
+
     for(var index = 0; index < payment.links.length; index++) {
-      // Redirect user to this endpoint for redirect url
-      if (payment.links[index].rel === 'approval_url') {
-        return {
-          id: payment.id,
-          url: payment.links[index].href
-        };
-      }
+      if(payment.links[index].rel === 'self')
+        result.get = payment.links[index].href;
+      else if(payment.links[index].rel === 'approval_url')
+        result.redirect = payment.links[index].href;
+      else if(payment.links[index].rel === 'execute')
+        result.execute = payment.links[index].href;
+      else
+        throw new Error("The transaction got an invalid response");
     }
+    if(result.redirect)
+      return result;
     throw new Error("The transaction could not be created");
   });
 };
