@@ -27,14 +27,16 @@ This is a dead-simple tool to create payments using the modern and elegant versi
 	.then(function(result){
 		// Handle the result here
 		console.log("Payment ID:", result.id);
-		console.log("Redirect URL", result.url);  // Redirect your client's browser to this URL
+		console.log("Redirect URL", result.redirect);  // Redirect your client's browser to this URL
+		console.log("Info URL", result.get);  // Get the payment info from this URL
+		console.log("Execute URL", result.execute);  // Execute the payment through this URL (payment approval is needed)
 	})
 	.catch(function(error){
 		// Handle the error here
 		console.error(error);
 	})
 
-Redirect your client to the given URL. When the client validates the payment, PayPal will redirect the browser to the `SUCCESS_CALLBACK_URL` with three query parameters:`paymentId`, `token` and `PayerID`.
+Redirect your client to `result.redirect`. When the client validates the payment, PayPal will redirect the browser to the `SUCCESS_CALLBACK_URL` with three query parameters:`paymentId`, `token` and `PayerID`.
 
 You can override the default success/cancel URL's by appending two additional parameters to the call:
 
