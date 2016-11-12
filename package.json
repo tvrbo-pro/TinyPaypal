@@ -11,7 +11,7 @@
     "url": "git+https://github.com/TvrboPro/TinyPaypal.git"
   },
   "engines": {
-    "node": "5.11.1"
+    "node": "6.9.1"
   },
   "keywords": [
     "paypal",
