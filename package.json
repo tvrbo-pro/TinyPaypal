@@ -1,6 +1,6 @@
 {
   "name": "tiny-paypal",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "The missing PayPal tool for Node",
   "main": "index.js",
   "scripts": {
@@ -9,9 +9,6 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/TvrboPro/TinyPaypal.git"
-  },
-  "engines": {
-    "node": "6.9.1"
   },
   "keywords": [
     "paypal",
