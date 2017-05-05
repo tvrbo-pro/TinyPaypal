@@ -1,7 +1,7 @@
 # Tiny PayPal
 The missing PayPal tool for Node
 
-PayPal has literally TONS of documentation, but little to none is targeted for Node users.
+PayPal has literally A TON of documentation, but little to none is targeted for NodeJS users.
 
 This is a dead-simple tool to create payments using the modern and elegant version of PayPal, solving hours of tedious research, trial and error.
 
@@ -11,19 +11,35 @@ This is a dead-simple tool to create payments using the modern and elegant versi
 
 ### Initialize it
 
-	var tp = require('tiny-paypal');
+	var paypal = require('tiny-paypal');
 
-	tp.init({
+	paypal.init({
 		CLIENT_ID: 'YOUR-ID-HERE', 
 		CLIENT_SECRET: 'YOUR-SECRET-HERE',
 		SUCCESS_CALLBACK_URL: 'https://your-server.com/payment-success',
 		CANCELED_CALLBACK_URL: 'https://your-server.com/payment-canceled',
-		SANDBOX: true,  // leave false for production
+		SANDBOX: true,  // set to false for production
+		
+		CURRENCY: 'EUR'  // optional
 	});
 
-### Create a payment
+### Create a simple payment
 
-	tp.createPayment(72.51, 'EUR', 'ACME Corporation Store')
+If you just want to charge an amount of money, you can use this function:
+
+	paypal.createPayment({
+        amount: 10,
+        description: "MyShop cart",
+        
+        // optional fields
+        
+        shipping: 5,    // 0 by default
+        discount: 4,    // 0 by default
+        discountText: "Discount text", // "Discount" by default
+        currency: 'EUR',    // overrides the value set in 'init()'
+        successURL: "https://your-server.com/payment-success",    // overrides the value set in 'init()'  
+        cancelURL: "https://your-server.com/payment-canceled"    // overrides the value set in 'init()'
+    })
 	.then(function(result){
 		// Handle the result here
 		console.log("Payment ID:", result.id);
@@ -36,15 +52,57 @@ This is a dead-simple tool to create payments using the modern and elegant versi
 		console.error(error);
 	})
 
-Redirect your client to `result.redirect`. When the client validates the payment, PayPal will redirect the browser to the `SUCCESS_CALLBACK_URL` with three query parameters:`paymentId`, `token` and `PayerID`.
+### Create a payment based on your cart
 
-You can override the default success/cancel URL's by appending two additional parameters to the call:
+To display a list of the items purchased on the PayPal screen, you can use TinyPaypal like this:
 
-	tp.createPayment(amount, currency, description, successURL, cancelURL)
+	paypal.createCartPayment({
+        cart: [
+            {
+                name: "Product 1",
+                description: "Product 1 description here", // optional
+                price: 3,
+                quantity: 10, // optional
+                sku: '#1234'  // optional
+            },{
+                name: "Product 2",
+                description: "Product 2 description here", // optional
+                price: 4,
+                quantity: 5, // optional
+                sku: '#1235' // optional
+            }
+        ],
+        description: "MyShop cart",
+        
+        // optional fields
+        
+        shipping: 5,
+        discount: 4,
+        discountText: "Discount text", // "Discount" by default
+        currency: 'EUR',    // overrides the value set in 'init()'
+        successURL: "https://your-server.com/payment-success",    // overrides the value set in 'init()'  
+        cancelURL: "https://your-server.com/payment-canceled"    // overrides the value set in 'init()'
+    })
+	.then(function(result){
+		// Handle the result here
+		console.log("Payment ID:", result.id);
+		console.log("Redirect URL", result.redirect);  // Redirect your client's browser to this URL
+		console.log("Info URL", result.get);  // Get the payment info from this URL
+		console.log("Execute URL", result.execute);  // Execute the payment through this URL (payment approval is needed)
+	})
+	.catch(function(error){
+		// Handle the error here
+		console.error(error);
+	})
+
+### Redirect
+
+Next, you need to redirect your client to `result.redirect`. When the client validates the payment, PayPal will redirect the browser to the `SUCCESS_CALLBACK_URL` with three query string parameters: `paymentId`, `token` and `PayerID`.
+
 
 ### Get these parameters and execute the payment
 
-	executePayment('the-payment-id', 'the-token', 'the-payer-id')
+	paypal.executePayment('the-payment-id', 'the-token', 'the-payer-id')
 	.then(function(result){
 		// Handle the result here
 		console.log("Response:", result);

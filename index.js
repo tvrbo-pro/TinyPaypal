@@ -1,40 +1,41 @@
 var request = require('request-promise');
 var Promise = require('bluebird');
 
-var parameters = {
+var config = {
   initialized: false,
   URL_PREFIX: 'https://api.paypal.com',
   CLIENT_ID: '',
   CLIENT_SECRET: '',
   SUCCESS_CALLBACK_URL: '',
-  CANCELED_CALLBACK_URL: ''
+  CANCELED_CALLBACK_URL: '',
+  CURRENCY: 'USD'
 };
 
-exports.init = function(params){
-  if(!params || typeof params != 'object') throw new Error("Invalid parameters");
-  else if(!params.CLIENT_ID) throw new Error("The PayPal Client ID is required");
-  else if(!params.CLIENT_SECRET) throw new Error("The PayPal Client Secret is required");
-  else if(!params.SUCCESS_CALLBACK_URL) throw new Error("The PayPal Success URL is required");
-  else if(!params.CANCELED_CALLBACK_URL) throw new Error("The PayPal Cancel URL is required");
+function init(defaults) {
+  if (!defaults || typeof defaults != 'object') throw new Error("Invalid parameters");
+  else if (!defaults.CLIENT_ID) throw new Error("The PayPal Client ID is required");
+  else if (!defaults.CLIENT_SECRET) throw new Error("The PayPal Client Secret is required");
+  else if (!defaults.SUCCESS_CALLBACK_URL) throw new Error("The PayPal Success URL is required");
+  else if (!defaults.CANCELED_CALLBACK_URL) throw new Error("The PayPal Cancel URL is required");
 
-  parameters.CLIENT_ID = params.CLIENT_ID;
-  parameters.CLIENT_SECRET = params.CLIENT_SECRET;
-  parameters.SUCCESS_CALLBACK_URL = params.SUCCESS_CALLBACK_URL;
-  parameters.CANCELED_CALLBACK_URL = params.CANCELED_CALLBACK_URL;
+  config.CLIENT_ID = defaults.CLIENT_ID;
+  config.CLIENT_SECRET = defaults.CLIENT_SECRET;
+  config.SUCCESS_CALLBACK_URL = defaults.SUCCESS_CALLBACK_URL;
+  config.CANCELED_CALLBACK_URL = defaults.CANCELED_CALLBACK_URL;
 
-  if(params.SANDBOX)
-    parameters.URL_PREFIX = "https://api.sandbox.paypal.com";
+  if (defaults.CURRENCY) config.CURRENCY = defaults.CURRENCY;
+  if (defaults.SANDBOX) config.URL_PREFIX = "https://api.sandbox.paypal.com";
 
-  parameters.initialized = true;
-};
+  config.initialized = true;
+}
 
-exports.getAccessToken = function(){
-  if(!parameters.initialized) return Promise.reject(new Error("Tiny PayPal must be initialized before it can be used"));
+function getAccessToken() {
+  if (!config.initialized) return Promise.reject(new Error("Tiny PayPal must be initialized before it can be used"));
 
   return request.post({
-    uri: parameters.URL_PREFIX + '/v1/oauth2/token',
+    uri: config.URL_PREFIX + '/v1/oauth2/token',
     headers: {
-      Authorization: 'Basic ' + new Buffer(parameters.CLIENT_ID + ':' + parameters.CLIENT_SECRET).toString('base64'),
+      Authorization: 'Basic ' + new Buffer(config.CLIENT_ID + ':' + config.CLIENT_SECRET).toString('base64'),
       'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
     },
     form: {
@@ -42,106 +43,250 @@ exports.getAccessToken = function(){
     },
     json: true
   })
-  .then(function(response){
+  .then(function (response) {
     return response.access_token;
   });
-};
+}
 
-exports.createPayment = function(amount, currency, description, success, cancel){
-  if(!parameters.initialized) return Promise.reject(new Error("Tiny PayPal must be initialized before it can be used"));
-  else if(!amount) Promise.reject(new Error("Please, enter an amount of money to charge"));
-  else if(!description) Promise.reject(new Error("Please, enter a description for the transaction as it should appear on PayPal"));
 
-  if(!currency) currency = 'USD';
+function createPayment(parameters) {
+  if(!parameters || typeof parameters !== 'object') return Promise.reject(new Error("Invalid parameters"));
+  else if (!config.initialized) return Promise.reject(new Error("Tiny PayPal must be initialized before it can be used"));
 
-  return Promise.try(function(){
-    return exports.getAccessToken();
-  })
-  .then(function(accessToken){
-    const body = {
-      transactions: [{
-        // "item_list": {
-        //   "items": [{
-        //     "name": "item",
-        //     "sku": "item",
-        //     "price": "1.00",
-        //     "currency": "USD",
-        //     "quantity": 1
-        //   }]
-        // },
-        amount: {
-          currency: currency,
-          total: amount.toFixed(2)
-        },
-        description: description
-      }],
-      payer: {
-        payment_method: "paypal"
-      },
-      intent:"sale",
-      redirect_urls: {
-        return_url: success || parameters.SUCCESS_CALLBACK_URL,
-        cancel_url: cancel || parameters.CANCELED_CALLBACK_URL
+  const { amount, shipping = 0, discount = 0, discountText = "Discount", currency, description, successURL, cancelURL } = parameters;
+
+  if (!amount) return Promise.reject(new Error("Please, enter an amount of money to charge"));
+  else if(typeof amount !== 'number' || typeof shipping !== 'number' || typeof discount !== 'number') return Promise.reject(new Error("Amount, shipping and discount must be numerical values"));
+  else if (!description) return Promise.reject(new Error("Please, enter a description for the transaction as it should appear on PayPal"));
+
+  return getAccessToken()
+    .then(function (accessToken) {
+      const itemList = [{
+        name: description,
+        // description: "description here",
+        price: amount.toFixed(2),
+        quantity: "1",
+        // tax: "0.00",
+        // sku: "#1234",
+        currency: currency || config.CURRENCY
+      }];
+
+      if(discount){
+        itemList.push({
+            name: discountText,
+            // description: "no description",
+            price: `-${discount.toFixed(2)}`,
+            quantity: "1",
+            // tax: "0.00",
+            // sku: "#1234",
+            currency: currency || config.CURRENCY
+          });
       }
-    };
 
-    return request.post({
-      uri: parameters.URL_PREFIX + '/v1/payments/payment',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + accessToken
-      },
-      body: body,
-      json: true
+      const body = {
+        transactions: [{
+          item_list: {
+            items: itemList
+          },
+          amount: {
+            currency: currency || config.CURRENCY,
+            total: (amount + shipping - discount).toFixed(2),
+            details: {
+              subtotal: (amount - discount).toFixed(2),
+              shipping: shipping.toFixed(2),
+              // tax: "0.00",
+              // handling_fee: "0.00",
+              // shipping_discount: "-0.00",
+              // insurance: "0.00"
+            }
+          },
+          description: description
+        }],
+        payer: {
+          payment_method: "paypal"
+        },
+        intent: "sale",
+        redirect_urls: {
+          return_url: successURL || config.SUCCESS_CALLBACK_URL,
+          cancel_url: cancelURL || config.CANCELED_CALLBACK_URL
+        }
+      }
+
+      return request.post({
+        uri: config.URL_PREFIX + '/v1/payments/payment',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + accessToken
+        },
+        body: body,
+        json: true
+      });
+    })
+    .then(function (payment) {
+      if (!payment.links) throw new Error("The transaction could not be created");
+
+      var result = {
+        id: payment.id
+        // get
+        // redirect
+        // execute
+      }
+
+      for (var index = 0; index < payment.links.length; index++) {
+        if (payment.links[index].rel === 'self')
+          result.get = payment.links[index].href;
+        else if (payment.links[index].rel === 'approval_url')
+          result.redirect = payment.links[index].href;
+        else if (payment.links[index].rel === 'execute')
+          result.execute = payment.links[index].href;
+        else
+          throw new Error("The transaction got an invalid response");
+      }
+      if (result.redirect) return result;
+      throw new Error("The transaction could not be created");
     });
-  })
-  .then(function(payment){
-    if(!payment.links) throw new Error("The transaction could not be created");
+}
 
-    var result = {
-      id: payment.id
-      // get
-      // redirect
-      // execute
-    };
+function createCartPayment(parameters) {
+  if(!parameters || typeof parameters !== 'object') return Promise.reject(new Error("Invalid parameters"));
+  else if (!config.initialized) return Promise.reject(new Error("Tiny PayPal must be initialized before it can be used"));
 
-    for(var index = 0; index < payment.links.length; index++) {
-      if(payment.links[index].rel === 'self')
-        result.get = payment.links[index].href;
-      else if(payment.links[index].rel === 'approval_url')
-        result.redirect = payment.links[index].href;
-      else if(payment.links[index].rel === 'execute')
-        result.execute = payment.links[index].href;
-      else
-        throw new Error("The transaction got an invalid response");
-    }
-    if(result.redirect)
-      return result;
-    throw new Error("The transaction could not be created");
-  });
-};
+  const { cart, shipping = 0, discount = 0, discountText = "Discount", currency, description, successURL, cancelURL } = parameters;
 
-exports.executePayment = function(paymentId, token, payerId) {
-  if(!parameters.initialized) return Promise.reject(new Error("Tiny PayPal must be initialized before it can be used"));
+  if (!cart || typeof cart !== 'object') return Promise.reject(new Error("Please, provide an array of items for the cart"));
+  else if (!description) return Promise.reject(new Error("Please, enter a description for the transaction as it should appear on PayPal"));
 
-  return Promise.try(function(){
-    if(!paymentId || !token || !payerId) throw new Error("Invalid parameters");
-    return exports.getAccessToken();
-  })
-  .then(function(accessToken){
-    return request.post({
-      uri: parameters.URL_PREFIX + '/v1/payments/payment/' + paymentId + '/execute/',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + accessToken
-      },
-      body: { 
-        payer_id : payerId
-      },
-      json: true
+  let itemList;
+  try {
+    itemList = cart.map(item => {
+      if(!item.name || typeof item.name !== 'string') throw new Error("The cart contains an item without a name");
+      else if(!item.price || typeof item.price !== 'number') throw new Error("The cart contains an item without a numeric price");
+      else if(item.quantity && typeof item.price !== 'number') throw new Error("The cart contains an item with a non-numeric quantity");
+
+      return {
+        name: item.name,
+        description: item.description || "",
+        price: item.price.toFixed(2),
+        quantity: (item.quantity || 1).toString(),
+        sku: item.sku || undefined,
+        currency: currency || config.CURRENCY
+        // tax: "0.00"
+      }
     });
-  });
-};
+  }
+  catch(err){
+    return Promise.reject(err);  
+  }
+
+  if(discount){
+    itemList.push({
+        name: discountText,
+        // description: "no description",
+        price: `-${discount.toFixed(2)}`,
+        quantity: "1",
+        // tax: "0.00",
+        // sku: "#1234",
+        currency: currency || config.CURRENCY
+      });
+  }
+
+  // prices taken from the original cart array, not itemList
+  const amount = cart.reduce((prev, cur) => prev + (cur.price * (cur.quantity || 1)), 0);
+
+  return getAccessToken()
+    .then(function (accessToken) {
+      const body = {
+        transactions: [{
+          item_list: {
+            items: itemList
+          },
+          amount: {
+            currency: currency || config.CURRENCY,
+            total: (amount + shipping - discount).toFixed(2),
+            details: {
+              subtotal: (amount - discount).toFixed(2),
+              shipping: shipping.toFixed(2),
+              // tax: "0.00",
+              // handling_fee: "0.00",
+              // shipping_discount: "-0.00",
+              // insurance: "0.00"
+            }
+          },
+          description: description
+        }],
+        payer: {
+          payment_method: "paypal"
+        },
+        intent: "sale",
+        redirect_urls: {
+          return_url: successURL || config.SUCCESS_CALLBACK_URL,
+          cancel_url: cancelURL || config.CANCELED_CALLBACK_URL
+        }
+      }
+
+      return request.post({
+        uri: config.URL_PREFIX + '/v1/payments/payment',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + accessToken
+        },
+        body: body,
+        json: true
+      });
+    })
+    .then(function (payment) {
+      if (!payment.links) throw new Error("The transaction could not be created");
+
+      var result = {
+        id: payment.id
+        // get
+        // redirect
+        // execute
+      }
+
+      for (var index = 0; index < payment.links.length; index++) {
+        if (payment.links[index].rel === 'self')
+          result.get = payment.links[index].href;
+        else if (payment.links[index].rel === 'approval_url')
+          result.redirect = payment.links[index].href;
+        else if (payment.links[index].rel === 'execute')
+          result.execute = payment.links[index].href;
+        else
+          throw new Error("The transaction got an invalid response");
+      }
+      if (result.redirect) return result;
+      throw new Error("The transaction could not be created");
+    });
+}
+
+function executePayment(paymentId, token, payerId) {
+  if (!config.initialized) return Promise.reject(new Error("Tiny PayPal must be initialized before it can be used"));
+  else if (!paymentId || !token || !payerId) return Promise.reject(new Error("Invalid parameters"));
+
+  return getAccessToken()
+    .then(function (accessToken) {
+      return request.post({
+        uri: config.URL_PREFIX + '/v1/payments/payment/' + paymentId + '/execute/',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + accessToken
+        },
+        body: {
+          payer_id: payerId
+        },
+        json: true
+      });
+    });
+}
+
+
+module.exports = {
+  init,
+  getAccessToken,
+  createPayment,
+  createCartPayment,
+  executePayment
+}
 
 
 // This might be useful for future work
@@ -190,7 +335,7 @@ https://developer.paypal.com/docs/api/payments.billing-plans/#definition-payment
 //             },
 //             description: "Right Side Coffe Roasters"
 //         }]
-//     };
+//     }
 //     paypal.payment.create(newTransactionFromSavedCard, function(error, payment) {
 //       if(error) {
 //         console.log('processPaymentWithStoredCard ERROR: ', error);
@@ -255,7 +400,7 @@ https://developer.paypal.com/docs/api/payments.billing-plans/#definition-payment
 //             }
 //         ],
 //         type: "INFINITE"
-//     };
+//     }
 
 //     paypal.billingPlan.create(billingPlanAttributes, function(error, billingPlan) {
 //         if (error) reject(error);
@@ -317,7 +462,7 @@ https://developer.paypal.com/docs/api/payments.billing-plans/#definition-payment
 //             postal_code: address.postalCode,
 //             country_code: address.countryCode
 //         }
-//     };
+//     }
 
 //     paypal.billingAgreement.create(billingAgreementAttributes, function(error, billingAgreement) {
 //         if (error) return reject(error);

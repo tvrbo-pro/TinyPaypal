@@ -1,11 +1,8 @@
 {
   "name": "tiny-paypal",
-  "version": "1.0.4",
+  "version": "2.0.0",
   "description": "The missing PayPal tool for Node",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/TvrboPro/TinyPaypal.git"
@@ -23,12 +20,12 @@
   },
   "homepage": "https://github.com/TvrboPro/TinyPaypal#readme",
   "devDependencies": {
-    "babel-eslint": "^6.1.2",
-    "eslint": "^3.1.1"
+    "babel-eslint": "^7.2.3",
+    "eslint": "^3.19.0"
   },
   "dependencies": {
-    "bluebird": "^3.4.1",
-    "request": "^2.74.0",
-    "request-promise": "^4.0.2"
+    "bluebird": "^3.5.0",
+    "request": "^2.81.0",
+    "request-promise": "^4.2.0"
   }
 }
