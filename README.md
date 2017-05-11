@@ -1,6 +1,8 @@
 # Tiny PayPal
 The missing PayPal tool for Node
 
+<a href="https://snyk.io/test/github/TvrboPro/TinyPaypal"><img src="https://snyk.io/test/github/TvrboPro/TinyPaypal/badge.svg" alt="Known Vulnerabilities" data-canonical-src="https://snyk.io/test/github/TvrboPro/TinyPaypal" style="max-width:100%;"></a>
+
 PayPal has literally A TON of documentation, but little to none is targeted for NodeJS users.
 
 This is a dead-simple tool to create payments using the modern and elegant version of PayPal, solving hours of tedious research, trial and error.
