@@ -13,17 +13,18 @@ This is a dead-simple tool to create payments using the modern and elegant versi
 
 ### Initialize it
 
-	var paypal = require('tiny-paypal');
+```js
+var paypal = require('tiny-paypal');
 
-	paypal.init({
-		CLIENT_ID: 'YOUR-ID-HERE', 
-		CLIENT_SECRET: 'YOUR-SECRET-HERE',
-		SUCCESS_CALLBACK_URL: 'https://your-server.com/payment-success',
-		CANCELED_CALLBACK_URL: 'https://your-server.com/payment-canceled',
-		SANDBOX: true,  // set to false for production
-		
-		CURRENCY: 'EUR'  // optional
-	});
+paypal.init({
+	CLIENT_ID: 'YOUR-ID-HERE', 
+	CLIENT_SECRET: 'YOUR-SECRET-HERE',
+	SUCCESS_CALLBACK_URL: 'https://your-server.com/payment-success',
+	CANCELED_CALLBACK_URL: 'https://your-server.com/payment-canceled',
+	SANDBOX: true,  // set to false for production
+	CURRENCY: 'EUR'  // optional
+});
+```
 
 ### Create a simple payment
 
