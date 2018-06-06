@@ -9,13 +9,6 @@ const URL_PREFIX = Symbol('URL_PREFIX');
 const CURRENCY = Symbol('CURRENCY');
 
 class PayPal {
-  [CLIENT_ID] = null;
-  [CLIENT_SECRET] = null;
-  [URL_PREFIX] = 'https://api.paypal.com'; // live
-  [SUCCESS_CALLBACK_URL] = null;
-  [CANCEL_CALLBACK_URL] = null;
-  [CURRENCY] = "USD";
-
   constructor(clientId, clientSecret, defaults = { successCallbackUrl: null, cancelCallbackUrl: null, currency: null, sandbox: false }) {
     if (!clientId) throw new Error("The PayPal Client ID is required");
     else if (!clientSecret) throw new Error("The PayPal Client Secret is required");
@@ -26,12 +19,18 @@ class PayPal {
     if (defaults) {
       if (defaults.sandbox)
         this[URL_PREFIX] = 'https://api.sandbox.paypal.com';
-      if (defaults.successCallbackUrl)
-        this[SUCCESS_CALLBACK_URL] = defaults.successCallbackUrl;
-      if (defaults.cancelCallbackUrl)
-        this[CANCEL_CALLBACK_URL] = defaults.cancelCallbackUrl;
-      if (defaults.currency)
-        this[CURRENCY] = defaults.currency;
+      else
+        this[URL_PREFIX] = 'https://api.paypal.com';
+
+      this[SUCCESS_CALLBACK_URL] = defaults.successCallbackUrl || null;
+      this[CANCEL_CALLBACK_URL] = defaults.cancelCallbackUrl || null;
+      this[CURRENCY] = defaults.currency || "USD";
+    }
+    else {
+      this[URL_PREFIX] = 'https://api.paypal.com'; // live
+      this[SUCCESS_CALLBACK_URL] = null;
+      this[CANCEL_CALLBACK_URL] = null;
+      this[CURRENCY] = "USD";
     }
   }
 

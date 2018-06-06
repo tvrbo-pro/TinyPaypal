@@ -43,7 +43,7 @@ const CANCEL_CALLBACK_URL = "https://www.your-store.com/checkout";
     // DETAILED CART PAYMENT 
 
     try {
-        const payment2 = await paypal.createPayment({
+        const payment2 = await paypal.createCartPayment({
             cart: [{
                 name: "Product 1",
                 description: "Product 1 description here", // optional

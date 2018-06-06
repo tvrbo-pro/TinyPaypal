@@ -72,7 +72,7 @@ To display a list of the items on the PayPal screen, you can use TinyPaypal like
 
 ```js
 try {
-	const payment = await paypal.createPayment({
+	const payment = await paypal.createCartPayment({
 		cart: [{
 			name: "Product 1",
 			description: "Product 1 description here", // optional
