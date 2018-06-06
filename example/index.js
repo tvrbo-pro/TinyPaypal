@@ -26,8 +26,8 @@ const CANCEL_CALLBACK_URL = "https://www.your-store.com/checkout";
             discount: 4,    // 0 by default
             discountText: "Welcome reduction", // "Discount" by default
             currency: "EUR",    // overrides the value by default
-            successURL: "https://www.your-store.com/payment-success",    // overrides the value set before
-            cancelURL: "https://www.your-store.com/payment-canceled"    // overrides the value set before
+            successCallbackUrl: "https://www.your-store.com/payment-success",    // overrides the value set before
+            cancelCallbackUrl: "https://www.your-store.com/payment-canceled"    // overrides the value set before
         });
 
         // Handle the result here
@@ -65,8 +65,8 @@ const CANCEL_CALLBACK_URL = "https://www.your-store.com/checkout";
             discount: 4,
             discountText: "Welcome reduction", // "Discount" by default
             currency: "EUR",    // overrides the value by default
-            successURL: "https://www.your-store.com/payment-success",    // overrides the value set before
-            cancelURL: "https://www.your-store.com/payment-canceled"    // overrides the value set before
+            successCallbackUrl: "https://www.your-store.com/payment-success",    // overrides the value set before
+            cancelCallbackUrl: "https://www.your-store.com/payment-canceled"    // overrides the value set before
         });
 
         // Handle the result here

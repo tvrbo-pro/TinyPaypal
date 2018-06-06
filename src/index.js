@@ -35,7 +35,7 @@ class PayPal {
     }
   }
 
-  async createPayment({ amount, shipping = 0, discount = 0, discountText = "Discount", currency, description, successURL, cancelURL }) {
+  async createPayment({ amount, shipping = 0, discount = 0, discountText = "Discount", currency, description, successCallbackUrl, cancelCallbackUrl }) {
     if (!amount) throw ("Please, enter an amount of money to charge");
     else if (typeof amount !== 'number' || typeof shipping !== 'number' || typeof discount !== 'number') throw ("Amount, shipping and discount must be numerical values");
     else if (!description) throw ("Please, enter a description for the transaction as it should appear on PayPal");
@@ -87,8 +87,8 @@ class PayPal {
       },
       intent: "sale",
       redirect_urls: {
-        return_url: successURL || this[SUCCESS_CALLBACK_URL],
-        cancel_url: cancelURL || this[CANCEL_CALLBACK_URL]
+        return_url: successCallbackUrl || this[SUCCESS_CALLBACK_URL],
+        cancel_url: cancelCallbackUrl || this[CANCEL_CALLBACK_URL]
       }
     };
 
@@ -127,7 +127,7 @@ class PayPal {
     return result;
   }
 
-  async createCartPayment({ cart, shipping = 0, discount = 0, discountText = "Discount", currency, description, successURL, cancelURL }) {
+  async createCartPayment({ cart, shipping = 0, discount = 0, discountText = "Discount", currency, description, successCallbackUrl, cancelCallbackUrl }) {
     if (!cart || !Array.isArray(cart)) throw new Error("Please, provide an array of items to the cart");
     else if (!description) throw new Error("Please, provide a description for the transaction as it should appear on PayPal");
 
@@ -187,8 +187,8 @@ class PayPal {
       },
       intent: "sale",
       redirect_urls: {
-        return_url: successURL || this[SUCCESS_CALLBACK_URL],
-        cancel_url: cancelURL || this[CANCEL_CALLBACK_URL]
+        return_url: successCallbackUrl || this[SUCCESS_CALLBACK_URL],
+        cancel_url: cancelCallbackUrl || this[CANCEL_CALLBACK_URL]
       }
     }
 

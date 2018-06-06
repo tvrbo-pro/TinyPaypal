@@ -9,118 +9,127 @@ This is a simple tool to create payments using the modern and elegant version of
 
 ### Install the module
 
-	yarn add tiny-paypal
-	# npm install tiny-paypal
+```bash
+yarn add tiny-paypal
+# npm install tiny-paypal
+```
 
 ### Initialize it
 
 ```js
-var paypal = require('tiny-paypal');
+const PayPal = require('tiny-paypal');
 
-paypal.init({
-	CLIENT_ID: 'YOUR-ID-HERE', 
-	CLIENT_SECRET: 'YOUR-SECRET-HERE',
-	SUCCESS_CALLBACK_URL: 'https://your-server.com/payment-success',
-	CANCELED_CALLBACK_URL: 'https://your-server.com/payment-canceled',
-	SANDBOX: true,  // set to false for production
-	CURRENCY: 'EUR'  // optional
-});
+const CLIENT_ID = "your-client-id-here";
+const CLIENT_SECRET = "your-client-secret-here";
+const SUCCESS_CALLBACK_URL = "https://www.your-store.com/success";
+const CANCEL_CALLBACK_URL = "https://www.your-store.com/checkout";
+
+const defaults = {
+	sandbox: true, 		// leave blank for production (default)
+	currency: "EUR",	// by default "USD"
+	successCallbackUrl: SUCCESS_CALLBACK_URL,
+	cancelCallbackUrl: CANCEL_CALLBACK_URL
+};
+
+const paypal = new PayPal(CLIENT_ID, CLIENT_SECRET, defaults);
 ```
 
 ### Create a simple payment
 
-If you just want to charge an amount of money, you can use this function:
+If you just want to charge an amount of money, you can invoke this method:
 
 ```js
-paypal.createPayment({
-	amount: 10,
-	description: "MyShop cart",
+try {
+	const payment = await paypal.createPayment({
+		amount: 10,
+		description: "My Shop Inc.",
 
-	// optional fields
+		// optional fields
 
-	shipping: 5,    // 0 by default
-	discount: 4,    // 0 by default
-	discountText: "Discount text", // "Discount" by default
-	currency: 'EUR',    // overrides the value set in 'init()'
-	successURL: "https://your-server.com/payment-success",    // overrides the value set in 'init()'  
-	cancelURL: "https://your-server.com/payment-canceled"    // overrides the value set in 'init()'
-})
-.then(function(result){
+		shipping: 5,    // 0 by default
+		discount: 4,    // 0 by default
+		discountText: "Welcome discount", // "Discount" by default
+		currency: "EUR",    // overrides the value by default
+		successCallbackUrl: "https://www.your-store.com/payment-success",    // overrides the value set before
+		cancelCallbackUrl: "https://www.your-store.com/payment-canceled"    // overrides the value set before
+	});
+
 	// Handle the result here
-	console.log("Payment ID:", result.id);
-	console.log("Redirect URL", result.redirect);  // Redirect your client's browser to this URL
-	console.log("Info URL", result.get);  // Get the payment info from this URL
-	console.log("Execute URL", result.execute);  // Execute the payment through this URL (payment approval is needed)
-})
-.catch(function(error){
-	// Handle the error here
-	console.error(error);
-})
+	console.log("Payment ID:", payment.id);
+	console.log("Redirect URL", payment.redirect);  // Redirect your client's browser to this URL
+	console.log("Info URL", payment.get);  // Get the payment info from this URL
+	console.log("Execute URL", payment.execute);  // Execute the payment through this URL (payment approval is needed)
+}
+catch (error) {
+	// Handle the error
+	console.error(error.message);
+}
 ```
 
 ### Create a payment based on your cart
 
-To display a list of the items purchased on the PayPal screen, you can use TinyPaypal like this:
+To display a list of the items on the PayPal screen, you can use TinyPaypal like this:
 
 ```js
-paypal.createCartPayment({
-	cart: [{
-		name: "Product 1",
-		description: "Product 1 description here", // optional
-		price: 3,
-		quantity: 10, // optional
-		sku: '#1234'  // optional
-	},{
-		name: "Product 2",
-		description: "Product 2 description here", // optional
-		price: 4,
-		quantity: 5, // optional
-		sku: '#1235' // optional
-	}],
-	description: "MyShop cart",
-	
-	// optional fields
-	
-	shipping: 5,
-	discount: 4,
-	discountText: "Discount text", // "Discount" by default
-	currency: 'EUR',    // overrides the value set in 'init()'
-	successURL: "https://your-server.com/payment-success",    // overrides the value set in 'init()'  
-	cancelURL: "https://your-server.com/payment-canceled"    // overrides the value set in 'init()'
-})
-.then(function(result){
+try {
+	const payment = await paypal.createPayment({
+		cart: [{
+			name: "Product 1",
+			description: "Product 1 description here", // optional
+			price: 3,
+			quantity: 10, // optional
+			sku: '#1234'  // optional
+		}, {
+			name: "Product 2",
+			description: "Product 2 description here", // optional
+			price: 4,
+			quantity: 5, // optional
+			sku: '#1235' // optional
+		}],
+		description: "My Shop Inc.",
+
+		// optional fields
+
+		shipping: 5,
+		discount: 4,
+		discountText: "Welcome discount", // "Discount" by default
+		currency: "EUR",    // overrides the value by default
+		successCallbackUrl: "https://www.your-store.com/payment-success",    // overrides the value set before
+		cancelCallbackUrl: "https://www.your-store.com/payment-canceled"    // overrides the value set before
+	});
+
 	// Handle the result here
-	console.log("Payment ID:", result.id);
-	console.log("Redirect URL", result.redirect);  // Redirect your client's browser to this URL
-	console.log("Info URL", result.get);  // Get the payment info from this URL
-	console.log("Execute URL", result.execute);  // Execute the payment through this URL (payment approval is needed)
-})
-.catch(function(error){
-	// Handle the error here
-	console.error(error);
-})
+	console.log("Payment ID:", payment.id);
+	console.log("Redirect URL", payment.redirect);  // Redirect your client's browser to this URL
+	console.log("Info URL", payment.get);  // Get the payment info from this URL
+	console.log("Execute URL", payment.execute);  // Execute the payment through this URL (payment approval is needed)
+}
+catch (error) {
+	// Handle the error
+	console.error(error.message);
+}
+
 ```
 
 ### Redirect
 
-Next, you need to redirect your client to `result.redirect`. When the client validates the payment, PayPal will redirect the browser to the `SUCCESS_CALLBACK_URL` with three query string parameters: `paymentId`, `token` and `PayerID`.
+Next, you need to redirect your client to `result.redirect`. When the client confirms the payment, PayPal will redirect the browser to the `SUCCESS_CALLBACK_URL` with three query string parameters: `paymentId`, `token` and `PayerID`.
 
 
 ### Get these parameters and execute the payment
 
 ```js
-paypal.executePayment('the-payment-id', 'the-token', 'the-payer-id')
-.then(function(result){
-	// Handle the result here
-	console.log("Response:", result);
-})
-.catch(function(error){
-	// Handle the error here
-	console.error(error);
-})
+try {
+	const result = await paypal.executePayment("payment-id", "token", "payer-id");
+	console.log("Payment result:", result);
+}
+catch (error) {
+	// Handle the error
+	console.error(error.message);
+}
 ```
 
-This will log into the console something like:
+This will log to the console something like:
 
 	Response: { id: 'PAY-1NA38651KW861730HK6HVNHQ',
 		intent: 'sale',
