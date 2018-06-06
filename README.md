@@ -5,11 +5,12 @@ The missing PayPal tool for Node
 
 PayPal has literally A TON of documentation, but little to none is targeted for NodeJS users.
 
-This is a dead-simple tool to create payments using the modern and elegant version of PayPal, solving hours of tedious research, trial and error.
+This is a simple tool to create payments using the modern and elegant version of PayPal, solving hours of research, trial and error.
 
 ### Install the module
 
-	npm install tiny-paypal
+	yarn add tiny-paypal
+	# npm install tiny-paypal
 
 ### Initialize it
 
