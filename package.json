@@ -1,6 +1,6 @@
 {
   "name": "tiny-paypal",
-  "version": "3.0.0-beta1",
+  "version": "3.0.0",
   "description": "The missing PayPal tool for Node",
   "main": "src/index.js",
   "repository": {
